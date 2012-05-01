@@ -1,4 +1,4 @@
-package org.kasource.kaplugin.osgi;
+package org.kasource.kaplugin;
 
 import org.kasource.kaplugin.PluginManager;
 import org.kasource.kaplugin.manager.PluginManagerImpl;
