@@ -2,6 +2,7 @@ package org.kasource.kaplugin.repository;
 
 import java.util.List;
 
+
 public interface PluginRepository {
 	public <T> List<T> getPluginsFor(Class<T> extensionPointInterface);
 	

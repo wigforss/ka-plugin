@@ -48,6 +48,7 @@
 	</properties>
   	<modules>
 			<module>core</module>
+			<module>spring</module>
 			<module>osgi</module> 
 	</modules>
 	
@@ -78,5 +79,66 @@
 		<plugins>
 		</plugins>	
 	</build>
-	
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>4.4</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>net.sf.scannotation</groupId>
+				<artifactId>scannotation</artifactId>
+				<version>1.0.2</version>
+			</dependency>
+			<dependency>
+				<groupId>log4j</groupId>
+				<artifactId>log4j</artifactId>
+				<version>1.2.16</version>
+			</dependency>
+			<dependency>
+				<groupId>org.easymock</groupId>
+				<artifactId>easymock</artifactId>
+				<version>2.5.1</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.easymock</groupId>
+				<artifactId>easymockclassextension</artifactId>
+				<version>2.5.1</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.unitils</groupId>
+				<artifactId>unitils-core</artifactId>
+				<version>${unitils.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.unitils</groupId>
+				<artifactId>unitils-test</artifactId>
+				<version>${unitils.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.unitils</groupId>
+				<artifactId>unitils-inject</artifactId>
+				<version>${unitils.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.unitils</groupId>
+				<artifactId>unitils-mock</artifactId>
+				<version>${unitils.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.unitils</groupId>
+				<artifactId>unitils-easymock</artifactId>
+				<version>${unitils.version}</version>
+				<scope>test</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 </project>

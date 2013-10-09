@@ -32,6 +32,7 @@ public class SimplePluginRepositoryTest {
 	
 	@Test
 	public void registerPluginTest() {
+	    repo.setAllowPluginsWithoutAnnotation(true);
 		Capture<Set<Object>> pluginCapture = new Capture<Set<Object>>();
 		EventListener impl = new EventListener() {};
 		Set<Object> returnSet = new HashSet<Object>();
