@@ -10,7 +10,7 @@
 	<groupId>org.kasource.kaplugin</groupId>
 	<artifactId>ka-plugin-spring</artifactId>
 	<packaging>jar</packaging>
-	<name>Ka Plugin Core</name>
+	<name>Ka Plugin Spring</name>
 	<url>http://kasource.org</url>
 	
 	<properties>
