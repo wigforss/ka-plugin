@@ -4,6 +4,7 @@ import org.kasource.kaplugin.repository.SimplePluginRepository;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedOperationParameter;
+import org.springframework.jmx.export.annotation.ManagedOperationParameters;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
 @ManagedResource(objectName = "Ka-Plugin:name=PluginRepository", description = "Plugin Repository")
@@ -29,7 +30,8 @@ public class SpringSimplePluginRepository extends SimplePluginRepository {
     }
     
     @ManagedOperation(description = "Returns all plugins registered on the class name provided (extension point interface)")
-    @ManagedOperationParameter(name = "className", description = "Fully qualified className of the extension point interface")
+    @ManagedOperationParameters({
+    @ManagedOperationParameter(name = "className", description = "Fully qualified className of the extension point interface")})
     public String getPluginsForClass(String className) throws ClassNotFoundException  {
        Class<?> clazz = Class.forName(className);
        return super.getPluginsFor(clazz).toString();
