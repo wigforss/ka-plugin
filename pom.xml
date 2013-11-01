@@ -9,7 +9,7 @@
 	<artifactId>ka-plugin-base</artifactId>
 	<packaging>pom</packaging>
 	<name>Ka Plugin Base Project</name>
-	<version>0.6</version>
+	<version>0.6.1-SNAPSHOT</version>
 	
 	<description>
 		A lightweight Java plugin framework.
