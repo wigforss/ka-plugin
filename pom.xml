@@ -6,7 +6,7 @@
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.kasource.kaplugin</groupId>
-	<artifactId>ka-plugin-base</artifactId>
+	<artifactId>ka-plugin</artifactId>
 	<packaging>pom</packaging>
 	<name>Ka Plugin Base Project</name>
 	<version>0.7-SNAPSHOT</version>
