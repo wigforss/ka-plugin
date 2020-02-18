@@ -32,7 +32,7 @@ jobs:
         MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
     - name: Generate Coverage report
-        run: mvn jacoco:report -Dmaven.buildNumber.skip=true -P jacoco -s .github/maven/settings.xml
+      run: mvn jacoco:report -Dmaven.buildNumber.skip=true -P jacoco -s .github/maven/settings.xml
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:
