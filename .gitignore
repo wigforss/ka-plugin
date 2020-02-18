@@ -5,3 +5,6 @@
 /.settings
 /.classpath
 /.project
+/core/target
+/spring/target
+/osgi/target
