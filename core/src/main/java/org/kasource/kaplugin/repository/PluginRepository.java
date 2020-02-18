@@ -1,18 +1,35 @@
 package org.kasource.kaplugin.repository;
 
-import java.util.List;
 
+import java.util.Set;
 
-public interface PluginRepository {
-	public <T> List<T> getPluginsFor(Class<T> extensionPointInterface);
-	
-	public <T> void registerPlugin(Class<T> extensionPointInterface, T pluginImpl);
-	
-	public void registerPlugin(Object object);
-	
-	public void addExtensionPoint(Class<?> extensionPoint);
-	
-	public void removeExtensionPoint(Class<?> extensionPoint);
-	
-	public boolean isExtensionPoint(Class<?> interfaceClass);
+import org.kasource.kaplugin.PluginRegistration;
+
+/**
+ * Repository of registered plugins.
+ **/
+public interface PluginRepository extends PluginRegistrar {
+
+    /**
+     * Returns a all plugins for a specific extension point.
+     *
+     * @param extensionPointInterface The org.kasource.kaplugin.annotation.ExtensionPoint annotated interface lookup plugins for.
+     *
+     * @return Set of PluginRegistration for the specified extension point (may be empty).
+     **/
+    Set<PluginRegistration> getPluginsFor(Class<?> extensionPointInterface);
+
+    /**
+     * Remove all registered plugins for the supplied extensionPointInterface.
+     *
+     * @param extensionPointInterface The interface to remove registered plugins for.
+     **/
+    void removeExtensionPoint(Class<?> extensionPointInterface);
+
+    /**
+     * Adds listener which will be invoked when the repository is changed.
+     *
+     * @param listener The listener to invoke.
+     **/
+    void addListener(PluginRepositoryListener listener);
 }

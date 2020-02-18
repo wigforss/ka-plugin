@@ -1,150 +1,77 @@
 package org.kasource.kaplugin.repository;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
 
-import org.kasource.kaplugin.ExtensionPoint;
-import org.kasource.kaplugin.Plugin;
+import org.kasource.commons.reflection.ClassIntrospectorImpl;
+import org.kasource.commons.reflection.filter.builder.ClassFilterBuilder;
+import org.kasource.kaplugin.PluginRegistration;
+import org.kasource.kaplugin.annotation.ExtensionPoint;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Default implementation of PluginRepository.
+ */
 public class SimplePluginRepository implements PluginRepository {
+    private static final Logger LOG = LoggerFactory.getLogger(SimplePluginRepository.class);
+    private Map<Class<?>, Set<PluginRegistration>> plugins = new ConcurrentHashMap<>();
+    private Set<PluginRepositoryListener> listeners = new CopyOnWriteArraySet<>();
 
-    private PluginSorter pluginSorter;
-    private Map<Class<?>, Set<Object>> plugins = new HashMap<Class<?>, Set<Object>>();
-
-    private Set<Class<?>> extensionPoints = new HashSet<Class<?>>();
-    protected boolean autoRegisterAnnotatedExtensionPoints = true;
-    protected boolean allowPluginsWithoutAnnotation;
-    
     @Override
-    public <T> void registerPlugin(Class<T> extensionPointInterface, T pluginImpl) {
-        validatePlugin(pluginImpl);
-        if (!extensionPointInterface.isInterface()) {
-            throw new IllegalArgumentException(extensionPointInterface.getName() + " must be an interface!");
-        }
-        extensionPoints.add(extensionPointInterface);
-        addPlugin(extensionPointInterface, pluginImpl);
+    public void registerPlugin(PluginRegistration plugin) {
+
+        Set<Class<?>> interfaces = new ClassIntrospectorImpl(plugin.getPlugin().getClass())
+                .getDeclaredInterfaces(new ClassFilterBuilder().annotated(ExtensionPoint.class).build());
+
+        // Add plugin for each interface
+        interfaces.stream().forEach(i -> addPlugin(i, plugin));
     }
 
     @Override
-    public void registerPlugin(Object object) {
-       
-        Set<Class<?>> interfaces = getInterfaces(object);
-        
-        for (Class<?> interfaceClass : interfaces) {
-            if (isExtensionPoint(interfaceClass)) {
-                validatePlugin(object);
-                addPlugin(interfaceClass, object);
-            }
+    public void removeExtensionPoint(Class<?> extensionPointInterface) {
+
+        if (plugins.remove(extensionPointInterface) != null) {
+            listeners.stream().forEach(l -> l.pluginRepositoryChanged(this, extensionPointInterface));
         }
-    }
-    
-    private Set<Class<?>> getInterfaces(Object object) {
-        Set<Class<?>> interfaces = new HashSet<Class<?>>();
-        interfaces.addAll(Arrays.asList(object.getClass().getInterfaces()));
-        Class<?> clazz = object.getClass();
-        while(!clazz.getSuperclass().equals(Object.class)) {
-            clazz = clazz.getSuperclass();
-            interfaces.addAll(Arrays.asList(clazz.getInterfaces()));
-        }
-        return interfaces;
     }
 
-    private void validatePlugin(Object object) {
-        if(!allowPluginsWithoutAnnotation && !object.getClass().isAnnotationPresent(Plugin.class)) {
-            throw new IllegalArgumentException(object.getClass()+ " is not annotated with @" + Plugin.class);
-        }
+    @Override
+    public void addListener(PluginRepositoryListener listener) {
+        listeners.add(listener);
     }
-    
-    private void addPlugin(Class<?> extensionPointInterface, Object pluginImpl) {
-        Set<Object> pluginSet = plugins.get(extensionPointInterface);
+
+
+    private void addPlugin(Class<?> extensionPointInterface, PluginRegistration plugin) {
+        Set<PluginRegistration> pluginSet = plugins.get(extensionPointInterface);
         if (pluginSet == null) {
-            pluginSet = new HashSet<Object>();
+            pluginSet = new HashSet<>();
             plugins.put(extensionPointInterface, pluginSet);
         }
-        pluginSet.add(pluginImpl);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> List<T> getPluginsFor(Class<T> extensionPointInterface) {
-        if (!extensionPointInterface.isInterface()) {
-            throw new IllegalArgumentException(extensionPointInterface.getName() + " must be an interface!");
+        if (pluginSet.add(plugin)) {
+            listeners.stream().forEach(l -> l.pluginRepositoryChanged(this, extensionPointInterface));
+            LOG.info("Plugin " + plugin + " registered.");
         }
-        Collection<Object> pluginList = plugins.get(extensionPointInterface);
-        if(pluginSorter != null) {
-            pluginList = pluginSorter.sort(pluginList);
-        }
-        List<T> resultList = new ArrayList<T>();
-        for (Object plugin : pluginList) {
-            resultList.add((T) plugin);
-        }
-        return resultList;
     }
 
     @Override
-    public void addExtensionPoint(Class<?> extensionPoint) {
-        extensionPoints.add(extensionPoint);
-
-    }
-
-    @Override
-    public boolean isExtensionPoint(Class<?> interfaceClass) {
-        if(autoRegisterAnnotatedExtensionPoints && interfaceClass.isAnnotationPresent(ExtensionPoint.class)) {
-            extensionPoints.add(interfaceClass);
+    public Set<PluginRegistration> getPluginsFor(Class<?> extensionPointInterface) {
+        Set<PluginRegistration> pluginRegistrationSet = plugins.get(extensionPointInterface);
+        if (pluginRegistrationSet != null) {
+            return pluginRegistrationSet.stream()
+                    .collect(Collectors.toSet());
         }
-        return extensionPoints.contains(interfaceClass);
+        return Collections.EMPTY_SET;
+
     }
 
-   
-    @Override
-    public void removeExtensionPoint(Class<?> extensionPoint) {
-       if(extensionPoints.remove(extensionPoint)) {
-           plugins.remove(extensionPoint);
-       }
+    protected Map<Class<?>, Set<PluginRegistration>> getPlugins() {
+        return plugins;
     }
-
-    /**
-     * @param extensionPoints the extensionPoints to set
-     */
-    public void setExtensionPoints(Set<Class<?>> extensionPoints) {
-        this.extensionPoints = extensionPoints;
-    }
-
-    /**
-     * @param autoRegisterAnnotatedExtensionPoints the autoRegisterAnnotatedExtensionPoints to set
-     */
-    public void setAutoRegisterAnnotatedExtensionPoints(boolean autoRegisterAnnotatedExtensionPoints) {
-        this.autoRegisterAnnotatedExtensionPoints = autoRegisterAnnotatedExtensionPoints;
-    }
-
-    /**
-     * @param pluginSorter the pluginSorter to set
-     */
-    public void setPluginSorter(PluginSorter pluginSorter) {
-        this.pluginSorter = pluginSorter;
-    }
-
-    /**
-     * @param allowPluginsWithoutAnnotation the allowPluginsWithoutAnnotation to set
-     */
-    public void setAllowPluginsWithoutAnnotation(boolean allowPluginsWithoutAnnotation) {
-        this.allowPluginsWithoutAnnotation = allowPluginsWithoutAnnotation;
-    }
-
-    /**
-     * @return the extensionPoints
-     */
-    public Set<Class<?>> getExtensionPoints() {
-        return extensionPoints;
-    }
-
-   
-
-   
 }

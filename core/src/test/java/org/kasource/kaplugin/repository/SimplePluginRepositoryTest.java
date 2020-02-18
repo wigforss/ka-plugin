@@ -1,55 +1,153 @@
 package org.kasource.kaplugin.repository;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.EventListener;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import org.easymock.Capture;
-import org.easymock.EasyMock;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kasource.kaplugin.repository.PluginSorter;
-import org.kasource.kaplugin.repository.SimplePluginRepository;
-import org.unitils.UnitilsJUnit4TestClassRunner;
-import org.unitils.easymock.EasyMockUnitils;
-import org.unitils.easymock.annotation.Mock;
-import org.unitils.inject.annotation.InjectIntoByType;
-import org.unitils.inject.annotation.TestedObject;
+import org.kasource.commons.collection.builder.SetBuilder;
+import org.kasource.kaplugin.PluginRegistration;
+import org.kasource.kaplugin.annotation.ExtensionPoint;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+import org.unitils.inject.util.InjectionUtils;
 
 
-
-@RunWith(UnitilsJUnit4TestClassRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class SimplePluginRepositoryTest {
+
 	@Mock
-	@InjectIntoByType
-	private PluginSorter pluginSorter;
-	
-	@TestedObject
-	private SimplePluginRepository repo;
-	
-	
-	@Test
-	public void registerPluginTest() {
-	    repo.setAllowPluginsWithoutAnnotation(true);
-		Capture<Set<Object>> pluginCapture = new Capture<Set<Object>>();
-		EventListener impl = new EventListener() {};
-		Set<Object> returnSet = new HashSet<Object>();
-		returnSet.add(impl);
-		EasyMock.expect(pluginSorter.sort(EasyMock.capture(pluginCapture))).andReturn(returnSet);
-		
-		EasyMockUnitils.replay();	
-		repo.registerPlugin(EventListener.class, impl);
-		repo.getPluginsFor(EventListener.class);
-		Set<Object> pluginSet = pluginCapture.getValue();
-		assertEquals(1, pluginSet.size());
-		assertEquals(true, pluginSet.contains(impl));
-		
+	private Map<Class<?>, Set<PluginRegistration>> plugins = new HashMap<>();
+
+	@Mock
+	private PluginRegistration registration;
+
+	@Mock
+	private Set<PluginRegistration> pluginSet;
+
+	@Mock
+	private PluginRepositoryListener listener;
+
+	private Set<PluginRepositoryListener> listeners = new HashSet<>();
+
+
+	@Captor
+	private ArgumentCaptor<Set<PluginRegistration>> pluginSetCaptor;
+
+
+	private SimplePluginRepository repo = new SimplePluginRepository();
+
+	@Before
+	public void setup() {
+		InjectionUtils.injectInto(plugins, repo, "plugins");
+		listeners.add(listener);
+		InjectionUtils.injectInto(listeners, repo, "listeners");
 	}
-	
-	@Test(expected=IllegalArgumentException.class)
-	public void registerNonInterfacePluginTest() {
-		repo.registerPlugin(String.class, "Test");
+
+	@Test
+	public void registerPluginAndInvokeListeners() {
+		SomeInterface impl = new SomeInterface() {};
+
+		when(registration.getPlugin()).thenReturn(impl);
+		when(plugins.get(SomeInterface.class)).thenReturn(pluginSet);
+		when(pluginSet.add(registration)).thenReturn(true);
+
+		repo.registerPlugin(registration);
+
+		verify(pluginSet).add(registration);
+		verify(listener).pluginRepositoryChanged(repo, SomeInterface.class);
+
+	}
+
+	@Test
+	public void registerPluginDontInvokeListeners() {
+		SomeInterface impl = new SomeInterface() {};
+
+		when(registration.getPlugin()).thenReturn(impl);
+		when(plugins.get(SomeInterface.class)).thenReturn(pluginSet);
+		when(pluginSet.add(registration)).thenReturn(false);
+
+		repo.registerPlugin(registration);
+
+		verify(pluginSet).add(registration);
+		verify(listener, times(0)).pluginRepositoryChanged(repo, SomeInterface.class);
+
+	}
+
+	@Test
+	public void registerPluginAndExtensionPointSet() {
+		SomeInterface impl = new SomeInterface() {};
+
+		when(registration.getPlugin()).thenReturn(impl);
+		when(plugins.get(SomeInterface.class)).thenReturn(null);
+		when(plugins.put(eq(SomeInterface.class), pluginSetCaptor.capture())).thenReturn(null);
+
+		repo.registerPlugin(registration);
+
+		assertThat(pluginSetCaptor.getValue(), contains(registration));
+	}
+
+	@Test
+	public void registerPluginNotAnnotated() {
+		EventListener impl = new EventListener() {};
+
+		when(registration.getPlugin()).thenReturn(impl);
+
+		repo.registerPlugin(registration);
+
+		verifyZeroInteractions(plugins);
+	}
+
+	@Test
+	public void getPluginsFor() {
+		when(plugins.get(SomeInterface.class)).thenReturn(new SetBuilder<PluginRegistration>().add(registration).build());
+
+		Set<PluginRegistration> pluginsFound = repo.getPluginsFor(SomeInterface.class);
+
+		assertThat(pluginsFound, contains(registration));
+	}
+
+	@Test
+	public void removeExtensionPointAndInvokeListeners() {
+		SomeInterface impl = new SomeInterface() {};
+
+		when(plugins.remove(SomeInterface.class)).thenReturn(pluginSet);
+
+		repo.removeExtensionPoint(SomeInterface.class);
+
+		verify(listener).pluginRepositoryChanged(repo, SomeInterface.class);
+	}
+
+	@Test
+	public void removeExtensionPointDontInvokeListeners() {
+		SomeInterface impl = new SomeInterface() {};
+
+		when(plugins.remove(SomeInterface.class)).thenReturn(null);
+
+		repo.removeExtensionPoint(SomeInterface.class);
+
+		verify(listener, times(0)).pluginRepositoryChanged(repo, SomeInterface.class);
+	}
+
+	@ExtensionPoint
+	public interface SomeInterface {
+
 	}
 }

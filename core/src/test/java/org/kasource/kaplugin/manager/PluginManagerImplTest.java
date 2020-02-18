@@ -1,27 +1,28 @@
-package org.kasource.kaplugin;
+package org.kasource.kaplugin.manager;
 
 import java.sql.Statement;
 
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.runner.RunWith;
-import org.kasource.kaplugin.manager.PluginManagerImpl;
 import org.kasource.kaplugin.repository.PluginRepository;
-import org.unitils.UnitilsJUnit4TestClassRunner;
-import org.unitils.easymock.annotation.Mock;
-import org.unitils.inject.annotation.InjectIntoByType;
-import org.unitils.inject.annotation.TestedObject;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
-@RunWith(UnitilsJUnit4TestClassRunner.class)
-public class PluginManagerTest {
+@RunWith(MockitoJUnitRunner.class)
+public class PluginManagerImplTest {
 
-	@SuppressWarnings("unused")
 	@Mock
-	@InjectIntoByType
 	private PluginRepository pluginRepository;
-	
-	@TestedObject
+
 	private PluginManagerImpl pluginManager = new PluginManagerImpl(pluginRepository);
+
+	@Before
+	public void setup() {
+		pluginManager = new PluginManagerImpl(pluginRepository);
+	}
 	
 	@Test
 	public void getExtensionPointTest() {

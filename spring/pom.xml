@@ -14,7 +14,7 @@
 	<url>http://kasource.org</url>
 	
 	<properties>
-		 <spring.version>[3.0.0.RELEASE,3.2.4.RELEASE]</spring.version>
+		 <spring.version>[3.0.0.RELEASE,]</spring.version>
 	</properties>
 
 	<dependencies>
@@ -48,47 +48,14 @@
 			<artifactId>junit</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.easymock</groupId>
-			<artifactId>easymock</artifactId>
+			<groupId>org.hamcrest</groupId>
+			<artifactId>hamcrest-all</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.unitils</groupId>
-			<artifactId>unitils-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.unitils</groupId>
-			<artifactId>unitils-test</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.unitils</groupId>
-			<artifactId>unitils-inject</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.unitils</groupId>
-			<artifactId>unitils-mock</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.unitils</groupId>
-			<artifactId>unitils-easymock</artifactId>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
 		</dependency>
 	</dependencies>
-	<reporting>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.6</version>
 
-				<configuration>
-					<excludePackageNames />
-					<detectLinks>true</detectLinks>
-					<links>
-						<link>http://java.sun.com/javase/6/docs/api/</link>
-					</links>
-				</configuration>
-
-			</plugin>
-		</plugins>
-	</reporting>
 
 </project>

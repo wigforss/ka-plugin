@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout master
+      run: |
+        git fetch origin
+        git checkout -b master origin/master
+    - name: Cache maven
+      uses: actions/cache@v1
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+              ${{ runner.os }}-maven-
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Install SSH key
+      uses: shimataro/ssh-key-action@v1
+      with:
+        private-key: ${{ secrets.SSH_DEPLOY_PRIVATE }}
+        public-key: ${{ secrets.SSH_DEPLOY_PUBLIC }}
+    - name: Import GPG key
+      run: |
+        gpg --batch --passphrase $CRYPTO -o signing-key.asc -d signing-key.enc
+        gpg --allow-secret-key-import --passphrase $GPG_PWD --batch --import signing-key.asc
+        rm signing-key.asc
+      env:
+        CRYPTO: ${{ secrets.CRYPTO }}
+        GPG_PWD: ${{ secrets.GPG_PWD }}
+    - name: Configure git name
+      run: git config --global user.name $GITHUB_ACTOR
+    - name: Release with Maven
+      run: mvn -V -B release:prepare release:perform -P sources,javadoc,gpg -s .github/maven/settings.xml
+      env:
+        MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+        MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        GPG_PWD: ${{ secrets.GPG_PWD }}
+        GPG_KEY: ${{ secrets.GPG_KEY }}
+        GIT_PWD: ${{ secrets.GIT_PWD }}
+        GIT_USER: ${{ secrets.GIT_USER }}
+        GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
